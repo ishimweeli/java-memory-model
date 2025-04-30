@@ -381,13 +381,42 @@ ArrayList&lt;Integer&gt; list = new ArrayList&lt;&gt;();
             <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
             <div class="slide-title">Object Lifecycle</div>
             <div class="content-wrapper">
-                <ol>
-                    <li><strong>Creation</strong>: Objects allocated in Eden space</li>
-                    <li><strong>Aging</strong>: Surviving objects move to Survivor spaces</li>
-                    <li><strong>Promotion</strong>: After surviving multiple young GC cycles, objects move to Old Generation</li>
-                    <li><strong>Collection</strong>: Objects without references are reclaimed by Garbage Collector</li>
-                </ol>
-                <pre><code>// 1. Creation - object allocated in Eden
+                <div class="lifecycle-steps">
+                    <div class="lifecycle-step">
+                        <span class="step-number">1</span>
+                        <div class="step-content">
+                            <h3>Creation</h3>
+                            <p>Objects allocated in Eden space</p>
+                        </div>
+                    </div>
+                    
+                    <div class="lifecycle-step">
+                        <span class="step-number">2</span>
+                        <div class="step-content">
+                            <h3>Aging</h3>
+                            <p>Surviving objects move to Survivor spaces</p>
+                        </div>
+                    </div>
+                    
+                    <div class="lifecycle-step">
+                        <span class="step-number">3</span>
+                        <div class="step-content">
+                            <h3>Promotion</h3>
+                            <p>After surviving multiple young GC cycles, objects move to Old Generation</p>
+                        </div>
+                    </div>
+                    
+                    <div class="lifecycle-step">
+                        <span class="step-number">4</span>
+                        <div class="step-content">
+                            <h3>Collection</h3>
+                            <p>Objects without references are reclaimed by Garbage Collector</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="code-content">
+                    <pre><code>// 1. Creation - object allocated in Eden
 Person person = new Person("John");
 
 // 2-3. Objects that survive GC cycles age and may be promoted
@@ -395,6 +424,7 @@ Person person = new Person("John");
 
 // 4. Collection - when no references remain
 person = null;  // Object becomes eligible for GC</code></pre>
+                </div>
             </div>
             <div class="slide-number">7</div>
         </div>
@@ -770,6 +800,82 @@ java -Xms2g -Xmx2g \
     </script>
 </body>
 </html>
+<style>
+.lifecycle-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+    padding: 20px;
+}
 
+.lifecycle-step {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #f8f8f8;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 5px solid #FF5722;
+    transition: transform 0.2s;
+}
 
+.lifecycle-step:hover {
+    transform: translateX(10px);
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.step-number {
+    background: #FF5722;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.step-content h3 {
+    color: #333;
+    font-size: 24px;
+    margin: 0 0 8px 0;
+    font-weight: bold;
+}
+
+.step-content p {
+    color: #666;
+    font-size: 18px;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.content-wrapper {
+    display: flex;
+    gap: 30px;
+    height: calc(100vh - 200px);
+    overflow: hidden;
+}
+
+.code-content {
+    flex: 0.4;
+    background: #f0f0f0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.code-content pre {
+    margin: 0;
+    height: 100%;
+    overflow: auto;
+}
+
+.code-content code {
+    font-size: 16px;
+    line-height: 1.5;
+}
+</style>
 
