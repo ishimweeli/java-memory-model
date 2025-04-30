@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Java Memory Model and Garbage Collection - AMALITECH</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling */
+            height: 100vh;
+        }
+        .navigation {
+            position: fixed;
+            bottom: 0;  /* Changed from top to bottom */
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            z-index: 1000;
+            text-align: center;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .slide-container {
+            height: calc(100vh - 60px);  /* Adjusted for bottom navigation */
+            margin-bottom: 60px;  /* Added margin at bottom */
+            margin-top: 0;  /* Removed top margin */
+            overflow: hidden;
+        }
+        .slide {
+            height: 100%;
+            padding: 40px;
+            box-sizing: border-box;
+            position: relative;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        .slide-title {
+            background-color: #FF5722;
+            color: white;
+            padding: 20px 40px;
+            margin: -40px -40px 20px;
+            font-size: calc(2vw + 16px);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: calc(8vw + 40px);
+            height: auto;
+            max-width: 180px;
+        }
+        .content-wrapper {
+            display: flex;
+            flex-direction: row;  /* Changed to row to place items side by side */
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px;
+            height: calc(100vh - 160px);  /* Account for title and navigation */
+        }
+        .text-content {
+            flex: 1;
+            max-width: 50%;
+        }
+        .code-content {
+            flex: 1;
+            max-width: 50%;
+        }
+        h1 {
+            color: #666;
+            text-align: center;
+            font-size: calc(3vw + 20px);
+            margin: 0 0 20px 0;
+        }
+        .tagline {
+            color: #666;
+            text-align: center;
+            font-style: italic;
+            font-size: calc(1.5vw + 12px);
+            margin: 0 0 30px 0;
+        }
+        ul {
+            font-size: calc(1.2vw + 10px);
+            line-height: 1.4;
+            margin: 0;
+            padding-left: 30px;
+        }
+        ul ul {
+            font-size: calc(1vw + 8px);
+            margin-top: 5px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        pre {
+            height: 100%;
+            margin: 0;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #FF5722;
+            font-size: calc(0.8vw + 8px);
+        }
+        code {
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        .slide-number {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: calc(0.8vw + 8px);
+            color: #666;
+        }
+        .orange-line {
+            border: none;
+            height: 2px;
+            background-color: #FF5722; /* Amalitech orange */
+            margin: 30px 0;
+        }
+        button {
+            background-color: #FF5722;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #E64A19;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #slideIndicator {
+            font-size: 14px;
+            margin: 0 15px;
+        }
+        .title-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin-top: 80px;
+        }
+        .title-image {
+            max-width: 60%;
+            height: auto;
+            margin: 0 auto 30px;
+            object-fit: contain;
+        }
+        /* Ensure code snippets are readable */
+        pre code {
+            display: block;
+            white-space: pre;
+            word-wrap: normal;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+
+        /* Make inline code stand out */
+        li code {
+            background-color: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 1600px) {
+            .slide {
+                padding: 80px;
+            }
+            
+            .slide-title {
+                padding: 40px 80px;
+                margin: -80px -80px 50px;
+                font-size: 48px;
+            }
+            
+            ul {
+                font-size: 36px;
+            }
+            
+            pre, code {
+                font-size: 32px;
+            }
+        }
+    </style>
+    <script>
+        // Function to replace placeholder with SVG AMALITECH logo
+        window.onload = function() {
+            // Only keep the slide navigation logic
+            updateSlideIndicator();
+        };
+    </script>
+</head>
+<body>
+    <div class="navigation">
+        <button id="prevBtn" onclick="showPreviousSlide()">Previous</button>
+        <span id="slideIndicator">Slide 1 of 20</span>
+        <button id="nextBtn" onclick="showNextSlide()">Next</button>
+    </div>
+
+    <div class="slide-container">
+        <!-- Slide 1 -->
+        <div class="slide" id="slide1">
+            <div class="title-container">
+                <img src="amalitech1.jpg" alt="AMALITECH" class="title-image"/>
+                <h1>Java Memory Model and Garbage Collection</h1>
+                <p class="tagline">Empowering the next generation of technology leaders in Africa</p>
+                <hr class="orange-line">
+            </div>
+            <div class="slide-number">1</div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide" id="slide2" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Introduction</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li>Java's automatic memory management is a key feature</li>
+                    <li>Relieves developers from manual memory allocation/deallocation</li>
+                    <li>Understanding the Java Memory Model is crucial for performance optimization</li>
+                    <li>Effective memory management prevents memory leaks and OutOfMemoryErrors</li>
+                </ul>
+            </div>
+            <div class="slide-number">2</div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide" id="slide3" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Memory Areas in Java</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Stack</strong>: Method invocations and local variables</li>
+                    <li><strong>Heap</strong>: Objects and their instance variables</li>
+                    <li><strong>Method Area</strong>: Class structures, static variables, method code</li>
+                    <li><strong>PC Registers</strong>: Thread execution state</li>
+                    <li><strong>Native Method Stack</strong>: Native method information</li>
+                </ul>
+            </div>
+            <div class="slide-number">3</div>
+        </div>
+
+        <!-- Slide 4 -->
+        <div class="slide" id="slide4" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Stack Memory</div>
+            <div class="content-wrapper">
+                <div class="text-content">
+                    <ul>
+                        <li>Each thread has its own stack</li>
+                        <li>Stores method calls in stack frames</li>
+                        <li>Contains:
+                            <ul>
+                                <li>Local variables</li>
+                                <li>Partial results</li>
+                                <li>Method return values</li>
+                            </ul>
+                        </li>
+                        <li>Automatically allocated/deallocated on method entry/exit</li>
+                        <li>Fixed size - can cause StackOverflowError</li>
+                    </ul>
+                </div>
+                <div class="code-content">
+                    <pre><code>public void methodA() {
+    int x = 10;            // Primitive on stack
+    String name = "Java";  // Reference on stack, object on heap
+    methodB();             // New frame pushed onto stack
+}  // Frame popped when method completes</code></pre>
+                </div>
+            </div>
+            <div class="slide-number">4</div>
+        </div>
+
+        <!-- Slide 5 -->
+        <div class="slide" id="slide5" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Heap Memory</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li>Shared across all threads</li>
+                    <li>All objects are created here</li>
+                    <li>Reference variables point to objects in heap</li>
+                    <li>Primary focus of Garbage Collection</li>
+                    <li>Size configurable via JVM parameters:
+                        <ul>
+                            <li><code>-Xms</code>: Initial heap size</li>
+                            <li><code>-Xmx</code>: Maximum heap size</li>
+                        </ul>
+                    </li>
+                </ul>
+                <pre><code>// Creating objects - allocated on heap
+String message = new String("Hello");
+ArrayList&lt;Integer&gt; list = new ArrayList&lt;&gt;();
+
+// JVM parameters example
+// java -Xms512m -Xmx1024m MyApplication</code></pre>
+            </div>
+            <div class="slide-number">5</div>
+        </div>
+
+        <!-- Slide 6 -->
+        <div class="slide" id="slide6" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">JVM Heap Structure</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Young Generation</strong>:
+                        <ul>
+                            <li><strong>Eden Space</strong>: New objects are created here</li>
+                            <li><strong>Survivor Spaces (S0 & S1)</strong>: Objects that survive Eden collection</li>
+                        </ul>
+                    </li>
+                    <li><strong>Old Generation</strong>:
+                        <ul>
+                            <li>Objects that survived multiple young generation cycles</li>
+                        </ul>
+                    </li>
+                    <li><strong>Metaspace</strong> (replaced PermGen in Java 8+):
+                        <ul>
+                            <li>Class metadata, method data, etc.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="slide-number">6</div>
+        </div>
+
+        <!-- Slide 7 -->
+        <div class="slide" id="slide7" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Object Lifecycle</div>
+            <div class="content-wrapper">
+                <ol>
+                    <li><strong>Creation</strong>: Objects allocated in Eden space</li>
+                    <li><strong>Aging</strong>: Surviving objects move to Survivor spaces</li>
+                    <li><strong>Promotion</strong>: After surviving multiple young GC cycles, objects move to Old Generation</li>
+                    <li><strong>Collection</strong>: Objects without references are reclaimed by Garbage Collector</li>
+                </ol>
+                <pre><code>// 1. Creation - object allocated in Eden
+Person person = new Person("John");
+
+// 2-3. Objects that survive GC cycles age and may be promoted
+// This happens automatically based on GC cycles
+
+// 4. Collection - when no references remain
+person = null;  // Object becomes eligible for GC</code></pre>
+            </div>
+            <div class="slide-number">7</div>
+        </div>
+
+        <!-- Slide 8 -->
+        <div class="slide" id="slide8" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Garbage Collection Fundamentals</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Automatic process</strong> that reclaims memory</li>
+                    <li>Based on the concept of <strong>reachability</strong></li>
+                    <li><strong>Unreachable objects</strong> (without references) are eligible for GC</li>
+                    <li>Key processes:
+                        <ul>
+                            <li><strong>Mark</strong>: Identify live objects</li>
+                            <li><strong>Sweep</strong>: Remove dead objects</li>
+                            <li><strong>Compact</strong>: Defragment memory (in some collectors)</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="slide-number">8</div>
+        </div>
+
+        <!-- Slide 9 -->
+        <div class="slide" id="slide9" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Garbage Collection Triggers</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Young Generation Full</strong>: Eden space fills up</li>
+                    <li><strong>Major Collection</strong>: Old Generation fills up</li>
+                    <li><strong>System.gc()</strong>: Suggestion to run GC (not guaranteed)</li>
+                    <li><strong>OutOfMemoryError</strong>: Last-ditch attempt before failure</li>
+                </ul>
+                <pre><code>// Creating many objects - may trigger Young GC when Eden fills
+for (int i = 0; i < 100000; i++) {
+    new byte[1024];  // Creating many short-lived objects
+}
+
+// Explicitly suggesting GC (not recommended in production)
+System.gc();  // Not guaranteed to run immediately or at all</code></pre>
+            </div>
+            <div class="slide-number">9</div>
+        </div>
+
+        <!-- Slide 10 -->
+        <div class="slide" id="slide10" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">GC Algorithms: Serial Collector</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Single-threaded</strong> collector</li>
+                    <li>Freezes all application threads during collection (<strong>"Stop the World"</strong>)</li>
+                    <li>Simple and with low overhead</li>
+                    <li>Suitable for:
+                        <ul>
+                            <li>Small applications</li>
+                            <li>Systems with limited CPU resources</li>
+                        </ul>
+                    </li>
+                    <li>Specified with: <code>-XX:+UseSerialGC</code></li>
+                </ul>
+            </div>
+            <div class="slide-number">10</div>
+        </div>
+
+        <!-- Slide 11 -->
+        <div class="slide" id="slide11" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">GC Algorithms: Parallel Collector</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Multi-threaded</strong> Young Generation collection</li>
+                    <li>Parallel Old GC for Old Generation</li>
+                    <li>Still causes "Stop the World" pauses</li>
+                    <li>Better throughput for multi-core systems</li>
+                    <li>Suitable for:
+                        <ul>
+                            <li>Batch processing applications</li>
+                            <li>Applications that can tolerate pauses</li>
+                        </ul>
+                    </li>
+                    <li>Specified with: <code>-XX:+UseParallelGC</code></li>
+                </ul>
+            </div>
+            <div class="slide-number">11</div>
+        </div>
+
+        <!-- Slide 12 -->
+        <div class="slide" id="slide12" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">GC Algorithms: Concurrent Mark Sweep (CMS)</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Low-pause</strong> collector</li>
+                    <li>Collects Old Generation concurrently with application</li>
+                    <li>Reduces pause times but with CPU overhead</li>
+                    <li>Can suffer from heap fragmentation</li>
+                    <li>Suitable for:
+                        <ul>
+                            <li>Interactive applications</li>
+                            <li>Applications requiring responsive UIs</li>
+                        </ul>
+                    </li>
+                    <li>Specified with: <code>-XX:+UseConcMarkSweepGC</code> (deprecated in Java 9+)</li>
+                </ul>
+            </div>
+            <div class="slide-number">12</div>
+        </div>
+
+        <!-- Slide 13 -->
+        <div class="slide" id="slide13" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">GC Algorithms: G1 (Garbage First)</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Region-based</strong> garbage collector</li>
+                    <li>Divides heap into equal-sized regions</li>
+                    <li>Focuses collection on regions with most garbage first</li>
+                    <li>Balanced approach for both throughput and latency</li>
+                    <li>Default in Java 9+</li>
+                    <li>Suitable for:
+                        <ul>
+                            <li>Large heaps (>4GB)</li>
+                            <li>Applications needing predictable pause times</li>
+                        </ul>
+                    </li>
+                    <li>Specified with: <code>-XX:+UseG1GC</code></li>
+                </ul>
+            </div>
+            <div class="slide-number">13</div>
+        </div>
+
+        <!-- Slide 14 -->
+        <div class="slide" id="slide14" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Monitoring Tools: JConsole</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li>Built-in Java monitoring tool</li>
+                    <li>Provides:
+                        <ul>
+                            <li>Memory usage</li>
+                            <li>Thread states</li>
+                            <li>VM summary</li>
+                            <li>MBean operations</li>
+                        </ul>
+                    </li>
+                    <li>Start with: <code>jconsole [process-id]</code></li>
+                </ul>
+            </div>
+            <div class="slide-number">14</div>
+        </div>
+
+        <!-- Slide 15 -->
+        <div class="slide" id="slide15" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Monitoring Tools: VisualVM</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li>More advanced visual monitoring</li>
+                    <li>Features:
+                        <ul>
+                            <li>Heap dumps analysis</li>
+                            <li>Thread dumps</li>
+                            <li>Profiling capabilities</li>
+                            <li>Plugin system</li>
+                        </ul>
+                    </li>
+                    <li>Start with: <code>jvisualvm [process-id]</code></li>
+                </ul>
+                <pre><code>// Taking a heap dump programmatically
+import java.lang.management.ManagementFactory;
+import com.sun.management.HotSpotDiagnosticMXBean;
+
+public class HeapDumper {
+    public static void dumpHeap(String filePath) throws Exception {
+        HotSpotDiagnosticMXBean mxBean = ManagementFactory.getPlatformMXBean(
+                HotSpotDiagnosticMXBean.class);
+        mxBean.dumpHeap(filePath, true);
+        System.out.println("Heap dumped to " + filePath);
+    }
+}</code></pre>
+            </div>
+            <div class="slide-number">15</div>
+        </div>
+
+        <!-- Slide 16 -->
+        <div class="slide" id="slide16" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">GC Logging and Analysis</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li>Enable GC logging:
+                        <ul>
+                            <li>Java 8: <code>-XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log</code></li>
+                            <li>Java 9+: <code>-Xlog:gc*:file=gc.log:time,uptime:filecount=5,filesize=10m</code></li>
+                        </ul>
+                    </li>
+                    <li>Analysis tools:
+                        <ul>
+                            <li>GCViewer</li>
+                            <li>GCeasy</li>
+                            <li>IBM GC & Memory Visualizer</li>
+                        </ul>
+                    </li>
+                </ul>
+                <pre><code># Running Java app with GC logging enabled (Java 8)
+java -XX:+PrintGCDetails -XX:+PrintGCDateStamps \
+     -Xloggc:gc.log MyApplication
+
+# Sample GC log output:
+# 2023-10-15T14:30:45.123+0000: [GC (Allocation Failure) 
+# [PSYoungGen: 33280K->4880K(38400K)] 
+# 33280K->4888K(125952K), 0.0095012 secs]</code></pre>
+            </div>
+            <div class="slide-number">16</div>
+        </div>
+
+        <!-- Slide 17 -->
+        <div class="slide" id="slide17" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Common Memory Problems</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Memory Leaks</strong>: Objects referenced but not used</li>
+                    <li><strong>High Allocation Rate</strong>: Creating too many short-lived objects</li>
+                    <li><strong>Premature Promotion</strong>: Objects promoted to Old Gen too quickly</li>
+                    <li><strong>Long GC Pauses</strong>: Application unresponsive during collection</li>
+                    <li><strong>OutOfMemoryError</strong>: Heap exhaustion or Metaspace limits</li>
+                </ul>
+                <pre><code>// Memory leak example - forgetting to close resources
+public void processFile() throws FileNotFoundException {
+    FileInputStream fis = new FileInputStream("data.txt");
+    // Read data...
+    // Missing fis.close() - resource leak
+}
+
+// OutOfMemoryError example
+List&lt;byte[]&gt; list = new ArrayList&lt;&gt;();
+while(true) {
+    list.add(new byte[1_000_000]); // Continuous allocation
+}</code></pre>
+            </div>
+            <div class="slide-number">17</div>
+        </div>
+
+        <!-- Slide 18 -->
+        <div class="slide" id="slide18" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Memory Optimization Strategies</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><strong>Object Pooling</strong>: Reuse objects instead of creating new ones</li>
+                    <li><strong>Weak/Soft References</strong>: Allow GC to collect when memory is tight</li>
+                    <li><strong>Collection Sizing</strong>: Use appropriate initial collection sizes</li>
+                    <li><strong>Immutable Objects</strong>: Reduce garbage from object modifications</li>
+                    <li><strong>Proper Heap Configuration</strong>: Right-size Young vs Old Generation</li>
+                </ul>
+                <pre><code>// Object pooling example
+class ConnectionPool {
+    private List&lt;Connection&gt; pool = new ArrayList&lt;&gt;(10);
+    
+    public Connection getConnection() {
+        if (pool.isEmpty()) {
+            return new Connection();
+        }
+        return pool.remove(pool.size() - 1);
+    }
+    
+    public void releaseConnection(Connection conn) {
+        pool.add(conn);  // Return to pool instead of being garbage collected
+    }
+}
+
+// Weak reference example
+WeakReference&lt;LargeObject&gt; weakRef = new WeakReference&lt;&gt;(largeObject);
+// GC can collect largeObject even if weakRef exists</code></pre>
+            </div>
+            <div class="slide-number">18</div>
+        </div>
+
+        <!-- Slide 19 -->
+        <div class="slide" id="slide19" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">JVM Tuning Parameters</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li><code>-XX:NewRatio</code>: Ratio of Old/Young Generation sizes</li>
+                    <li><code>-XX:SurvivorRatio</code>: Ratio of Eden/Survivor space sizes</li>
+                    <li><code>-XX:MaxGCPauseMillis</code>: Target for maximum GC pause time</li>
+                    <li><code>-XX:ParallelGCThreads</code>: Number of GC threads to use</li>
+                    <li><code>-XX:ConcGCThreads</code>: Number of threads for concurrent phases</li>
+                </ul>
+                <pre><code># Complete JVM startup with tuning parameters
+java -Xms2g -Xmx2g \
+     -XX:NewRatio=3 \
+     -XX:SurvivorRatio=6 \
+     -XX:+UseG1GC \
+     -XX:MaxGCPauseMillis=200 \
+     -XX:ParallelGCThreads=4 \
+     -XX:ConcGCThreads=2 \
+     -jar MyApplication.jar</code></pre>
+            </div>
+            <div class="slide-number">19</div>
+        </div>
+
+        <!-- Slide 20 -->
+        <div class="slide" id="slide20" style="display: none;">
+            <img src="amalitech1.jpg" alt="AMALITECH" class="logo"/>
+            <div class="slide-title">Best Practices</div>
+            <div class="content-wrapper">
+                <ul>
+                    <li>Size heap appropriately for application needs</li>
+                    <li>Choose the right GC algorithm for your use case</li>
+                    <li>Monitor and tune based on actual application behavior</li>
+                    <li>Consider GC impact on application responsiveness</li>
+                    <li>Test memory performance under realistic load conditions</li>
+                </ul>
+            </div>
+            <div class="slide-number">20</div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 20;
+
+        function updateSlideIndicator() {
+            document.getElementById('slideIndicator').textContent = `Slide ${currentSlide} of ${totalSlides}`;
+            document.getElementById('prevBtn').disabled = (currentSlide === 1);
+            document.getElementById('nextBtn').disabled = (currentSlide === totalSlides);
+        }
+
+        function showSlide(slideNum) {
+            // Hide all slides
+            for (let i = 1; i <= totalSlides; i++) {
+                document.getElementById(`slide${i}`).style.display = 'none';
+            }
+            // Show the current slide
+            document.getElementById(`slide${slideNum}`).style.display = 'block';
+            
+            // Update the current slide number
+            currentSlide = slideNum;
+            updateSlideIndicator();
+        }
+
+        function showNextSlide() {
+            if (currentSlide < totalSlides) {
+                showSlide(currentSlide + 1);
+            }
+        }
+
+        function showPreviousSlide() {
+            if (currentSlide > 1) {
+                showSlide(currentSlide - 1);
+            }
+        }
+
+        // Add keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowRight' || event.key === 'PageDown') {
+                showNextSlide();
+            } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+                showPreviousSlide();
+            }
+        });
+
+        // Initialize
+        updateSlideIndicator();
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
