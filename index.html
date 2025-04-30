@@ -148,16 +148,53 @@
         }
         .title-container {
             display: flex;
-            justify-content: center;
-            align-items: center;
             flex-direction: column;
-            margin-top: 80px;
+            align-items: center;
+            justify-content: flex-start;  /* Changed from center to flex-start */
+            padding-top: 40px;  /* Reduced top padding */
+            text-align: center;
+            width: 100%;
         }
-        .title-image {
+        .amalitech-logo {
+            width: 300px;  /* Reduced logo size */
             max-width: 60%;
-            height: auto;
-            margin: 0 auto 30px;
-            object-fit: contain;
+            margin-bottom: 20px;  /* Reduced margin */
+        }
+        h1 {
+            font-size: 42px;
+            color: #333;
+            margin: 20px 0;
+            line-height: 1.2;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);  /* Added subtle shadow for better visibility */
+        }
+        .tagline {
+            font-size: 20px;
+            color: #666;
+            margin: 15px 0;
+            font-style: italic;
+        }
+        .orange-line {
+            width: 50%;
+            height: 3px;
+            background-color: #FF5722;
+            margin: 20px 0;
+            border: none;
+        }
+        /* Make sure the slide takes full height */
+        .slide {
+            min-height: calc(100vh - 60px);  /* Subtract navigation height */
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        /* Adjust main title for better visibility */
+        .main-title {
+            font-size: 48px;
+            color: #444;
+            text-align: center;
+            margin: 30px 0;
+            padding: 0 20px;
+            font-weight: bold;
         }
         /* Ensure code snippets are readable */
         pre code {
@@ -215,8 +252,8 @@
         <!-- Slide 1 -->
         <div class="slide" id="slide1">
             <div class="title-container">
-                <img src="amalitech1.jpg" alt="AMALITECH" class="title-image"/>
-                <h1>Java Memory Model and Garbage Collection</h1>
+                <img src="amalitech1.jpg" alt="AMALITECH" class="amalitech-logo"/>
+                <div class="main-title">Java Memory Model and Garbage Collection</div>
                 <p class="tagline">Empowering the next generation of technology leaders in Africa</p>
                 <hr class="orange-line">
             </div>
@@ -733,10 +770,6 @@ java -Xms2g -Xmx2g \
     </script>
 </body>
 </html>
-
-
-
-
 
 
 
